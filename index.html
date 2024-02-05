@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Damage Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #333;
+            color: #ffffff;
+            text-align: center;
+            padding: 1em;
+        }
+
+        section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        input {
+            display: none;
+        }
+
+        p {
+            margin: 10px 0;
+        }
+
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1em;
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Car Scratch Detector AI</h1>
+        <p>Find your defects!</p>
+    </header>
+    <section>
+        <h2>Take a picture of the damage and insert below</h2>
+        <p>Stand approximately five feet away from the damage and take a clear photo</p>
+        <p>Insert image below!</p>
+        
+        <!-- Input element for file upload -->
+        <input type="file" id="fileInput" accept="image/*">
+
+        <!-- Button to trigger file input -->
+        <button onclick="selectFile()">Choose File</button>
+
+        <!-- Display selected file name -->
+        <p id="selectedFile"></p>
+
+        <!-- Display selected image -->
+        <img id="selectedImage">
+
+        <!-- Button to submit the selected file to the backend -->
+        <button onclick="submitFile()">Submit</button>
+
+        <!-- Placeholder for damage severity and confidence -->
+        <div id="result" style="margin-top: 20px; display: none;">
+            <p id="severity" style="font-size: 24px; font-weight: bold;"></p>
+            <p id="confidence" style="font-size: 16px;"></p>
+        </div>
+
+        <!-- JavaScript to handle file selection and submission -->
+    <script>
+        var fileInput = document.getElementById('fileInput');
+        var selectedFile = document.getElementById('selectedFile');
+        var selectedImage = document.getElementById('selectedImage');
+        var resultContainer = document.getElementById('result');
+        var severityElement = document.getElementById('severity');
+        var confidenceElement = document.getElementById('confidence');
+
+        function selectFile() {
+            fileInput.click();
+            fileInput.addEventListener('change', function() {
+                var file = fileInput.files[0];
+                selectedFile.innerText = 'Selected File: ' + file.name;
+
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImage.src = e.target.result;
+                    selectedImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function submitFile() {
+            var file = fileInput.files[0];
+            var formData = new FormData();
+            formData.append('uploaded_file', file, file.name);
+
+            fetch('http://localhost:8000/CarDamageTest/images/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Use regular expression to extract values from the string
+                const match = /\(([^,]+), '([^']+)'\)/.exec(data.message);
+
+                // Extract values from the regex match
+                const confidence = (parseFloat(match[1]) * 100).toFixed(2);
+                const severity = match[2];
+
+                // Display the result
+                resultContainer.style.display = 'block';
+                severityElement.innerText = 'Damage Severity: ' + severity;
+                confidenceElement.innerText = 'Confidence: ' + confidence + '%';
+            })
+        }
+    </script>
+    </section>
+    <footer>
+        <p>&copy; 2023 My AI Site. All rights reserved.</p>
+    </footer>
+</body>
+</html>
